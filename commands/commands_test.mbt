@@ -205,3 +205,86 @@ test "zrank and zrevrank" {
     _ => fail("expected revrank 1")
   }
 }
+
+///|
+test "getrange and setrange" {
+  let ctx = mk_ctx()
+  let _ = @commands.execute(ctx, [
+    @utf8.encode("SET"),
+    @utf8.encode("k"),
+    @utf8.encode("hello"),
+  ])
+  let r = @commands.execute(ctx, [
+    @utf8.encode("GETRANGE"),
+    @utf8.encode("k"),
+    @utf8.encode("1"),
+    @utf8.encode("3"),
+  ])
+  match r {
+    @resp.BulkString(b) => assert_eq(@utf8.decode_lossy(b), "ell")
+    _ => fail("expected ell")
+  }
+  let s = @commands.execute(ctx, [
+    @utf8.encode("SETRANGE"),
+    @utf8.encode("k"),
+    @utf8.encode("6"),
+    @utf8.encode("!"),
+  ])
+  match s {
+    @resp.Integer(v) => assert_eq(v, 7L)
+    _ => fail("expected length 7")
+  }
+  let g = @commands.execute(ctx, [@utf8.encode("GET"), @utf8.encode("k")])
+  match g {
+    @resp.BulkString(b) => assert_eq(@utf8.decode_lossy(b), "hello\u{0}!")
+    _ => fail("expected hello NUL bang")
+  }
+}
+
+///|
+test "hstrlen and ltrim" {
+  let ctx = mk_ctx()
+  let _ = @commands.execute(ctx, [
+    @utf8.encode("HSET"),
+    @utf8.encode("h"),
+    @utf8.encode("f"),
+    @utf8.encode("abc"),
+  ])
+  let r = @commands.execute(ctx, [
+    @utf8.encode("HSTRLEN"),
+    @utf8.encode("h"),
+    @utf8.encode("f"),
+  ])
+  match r {
+    @resp.Integer(v) => assert_eq(v, 3L)
+    _ => fail("expected 3")
+  }
+  let _ = @commands.execute(ctx, [
+    @utf8.encode("RPUSH"),
+    @utf8.encode("l"),
+    @utf8.encode("a"),
+    @utf8.encode("b"),
+    @utf8.encode("c"),
+    @utf8.encode("d"),
+  ])
+  let t = @commands.execute(ctx, [
+    @utf8.encode("LTRIM"),
+    @utf8.encode("l"),
+    @utf8.encode("1"),
+    @utf8.encode("2"),
+  ])
+  match t {
+    @resp.SimpleString(s) => assert_eq(s, "OK")
+    _ => fail("expected OK")
+  }
+  let l = @commands.execute(ctx, [
+    @utf8.encode("LRANGE"),
+    @utf8.encode("l"),
+    @utf8.encode("0"),
+    @utf8.encode("-1"),
+  ])
+  match l {
+    @resp.Array(items) => assert_eq(items.length(), 2)
+    _ => fail("expected 2 items")
+  }
+}

@@ -155,6 +155,74 @@ pub fn Store::get_string(self : Store, key : String) -> Bytes? {
 }
 
 ///|
+pub fn Store::getrange(
+  self : Store,
+  key : String,
+  start : Int,
+  stop : Int,
+) -> Bytes {
+  match self.get_string(key) {
+    None => Bytes::make(0, 0)
+    Some(b) => {
+      let from = normalize_index(start, b.length())
+      let to = normalize_index(stop, b.length())
+      if from < 0 || to < 0 || from > to {
+        Bytes::make(0, 0)
+      } else {
+        bytes_slice(b, from, to - from + 1)
+      }
+    }
+  }
+}
+
+///|
+pub fn Store::setrange(
+  self : Store,
+  key : String,
+  offset : Int,
+  value : Bytes,
+) -> Int? {
+  if offset < 0 {
+    return None
+  }
+  match self.get(key) {
+    Some(Str(old)) => {
+      let out = Buffer()
+      let mut i = 0
+      while i < offset && i < old.length() {
+        out.write_byte(old[i])
+        i = i + 1
+      }
+      while i < offset {
+        out.write_byte(0)
+        i = i + 1
+      }
+      out.write_bytes(value)
+      let tail_start = offset + value.length()
+      if tail_start < old.length() {
+        for j = tail_start; j < old.length(); j = j + 1 {
+          out.write_byte(old[j])
+        }
+      }
+      let b = out.to_bytes()
+      self.set_string(key, b)
+      Some(b.length())
+    }
+    None => {
+      let out = Buffer()
+      for i = 0; i < offset; i = i + 1 {
+        out.write_byte(0)
+      }
+      out.write_bytes(value)
+      let b = out.to_bytes()
+      self.set_string(key, b)
+      Some(b.length())
+    }
+    Some(_) => None
+  }
+}
+
+///|
 pub fn Store::append_string(self : Store, key : String, value : Bytes) -> Int? {
   match self.get(key) {
     None => {
@@ -273,6 +341,34 @@ pub fn Store::llen(self : Store, key : String) -> Int? {
   match self.get(key) {
     Some(List(a)) => Some(a.length())
     _ => None
+  }
+}
+
+///|
+pub fn Store::ltrim(
+  self : Store,
+  key : String,
+  start : Int,
+  stop : Int,
+) -> Bool {
+  match self.get(key) {
+    Some(List(a)) => {
+      let from = normalize_index(start, a.length())
+      let to = normalize_index(stop, a.length())
+      let kept : Array[Bytes] = []
+      if from >= 0 && to >= 0 && from <= to {
+        for i = from; i <= to; i = i + 1 {
+          kept.push(a[i])
+        }
+      }
+      if kept.is_empty() {
+        let _ = self.del(key)
+      } else {
+        self.set(key, List(kept))
+      }
+      true
+    }
+    _ => true
   }
 }
 
@@ -696,4 +792,16 @@ pub fn parse_integer_bytes(b : Bytes) -> Int64? {
   } else {
     Some(v)
   }
+}
+
+///|
+fn bytes_slice(b : Bytes, start : Int, len : Int) -> Bytes {
+  if len <= 0 {
+    return Bytes::make(0, 0)
+  }
+  let out = Buffer()
+  for i = 0; i < len; i = i + 1 {
+    out.write_byte(b[start + i])
+  }
+  out.to_bytes()
 }
