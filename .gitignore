@@ -5,3 +5,4 @@ target
 .mooncakes/
 .moonagent/
 *.aof
+moonredis_path_debug.txt
