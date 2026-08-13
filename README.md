@@ -15,6 +15,7 @@ moonredis 从零实现了 RESP（REdis Serialization Protocol）编解码、五�
 - **发布订阅**：`SUBSCRIBE` / `UNSUBSCRIBE` / `PUBLISH`，单线程事件循环内投递
 - **AOF 持久化**：以 RESP 格式追加写入，启动时自动重放，支持中文/Unicode 路径（Windows 下使用宽字符 API）
 - **自带 CLI**：`moonredis-cli` 可执行单条命令
+- **兼容性文档**：[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) 列出协议/命令覆盖与设计取舍
 - **跨平台**：核心逻辑为纯 MoonBit；网络层是仓库内自带的 C shim（Windows 用 Winsock 动态加载，POSIX 用系统 socket），不依赖第三方网络库
 - **AI 友好**：命令实现与协议解析分离、文档完整、示例可直接运行，方便 AI 工具辅助扩展新命令
 
@@ -70,11 +71,11 @@ redis-cli -p 6399 GET hello
 
 **键**：`DEL` `EXISTS` `KEYS` `TYPE` `EXPIRE` `PEXPIRE` `TTL` `PTTL` `PERSIST` `DBSIZE` `FLUSHDB` `FLUSHALL`
 
-**String**：`SET` `SETNX` `GET` `GETDEL` `MGET` `MSET` `MSETNX` `APPEND` `STRLEN` `INCR` `DECR` `INCRBY` `DECRBY`
+**String**：`SET` `SETNX` `SETRANGE` `GET` `GETRANGE` `GETDEL` `MGET` `MSET` `MSETNX` `APPEND` `STRLEN` `INCR` `DECR` `INCRBY` `DECRBY`
 
-**List**：`LPUSH` `RPUSH` `LPOP` `RPOP` `LLEN` `LRANGE` `LINDEX` `LSET`
+**List**：`LPUSH` `RPUSH` `LPOP` `RPOP` `LLEN` `LRANGE` `LINDEX` `LSET` `LTRIM`
 
-**Hash**：`HSET` `HMSET` `HSETNX` `HGET` `HGETALL` `HDEL` `HEXISTS` `HLEN` `HKEYS` `HVALS`
+**Hash**：`HSET` `HMSET` `HSETNX` `HGET` `HGETALL` `HDEL` `HEXISTS` `HLEN` `HSTRLEN` `HKEYS` `HVALS`
 
 **Set**：`SADD` `SREM` `SMEMBERS` `SISMEMBER` `SCARD` `SPOP`
 
