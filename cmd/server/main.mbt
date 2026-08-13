@@ -35,7 +35,7 @@ fn main {
   println(
     "moonredis: starting (port=\{port}, aof=\{aof_enabled}, aof_path=\{aof_path})",
   )
-  let server = @server.Server::new(aof_path~, aof_enabled~)
+  let server = @moonredis_server.Server::new(aof_path~, aof_enabled~)
   server.start(port)
 }
 

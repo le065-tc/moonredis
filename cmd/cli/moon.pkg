@@ -4,6 +4,4 @@ import {
   "le065-tc/moonredis/native",
 }
 
-options(
-  "is-main": true,
-)
+pkgtype(kind: "executable")
