@@ -30,23 +30,23 @@ moon build --target native
 ### 2. 启动服务器
 
 ```bash
-moon run cmd/server -- --port 6399
+moon run cmd/server --target native -- --port 6399
 ```
 
 启用 AOF 持久化：
 
 ```bash
-moon run cmd/server -- --port 6399 --aof ./moonredis.aof --appendonly yes
+moon run cmd/server --target native -- --port 6399 --aof ./moonredis.aof --appendonly yes
 ```
 
 ### 3. 使用 CLI
 
 ```bash
-moon run cmd/cli -- --port 6399 PING
-moon run cmd/cli -- --port 6399 SET name moonbit
-moon run cmd/cli -- --port 6399 GET name
-moon run cmd/cli -- --port 6399 RPUSH list a b c
-moon run cmd/cli -- --port 6399 LRANGE list 0 -1
+moon run cmd/cli --target native -- --port 6399 PING
+moon run cmd/cli --target native -- --port 6399 SET name moonbit
+moon run cmd/cli --target native -- --port 6399 GET name
+moon run cmd/cli --target native -- --port 6399 RPUSH list a b c
+moon run cmd/cli --target native -- --port 6399 LRANGE list 0 -1
 ```
 
 ### 4. Python 示例

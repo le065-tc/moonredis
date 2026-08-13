@@ -28,3 +28,6 @@ jobs:
 
       - name: Test (native)
         run: moon test --target native
+
+      - name: Smoke test
+        run: python scripts/smoke_test.py
