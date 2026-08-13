@@ -6,3 +6,4 @@ target
 .moonagent/
 *.aof
 moonredis_path_debug.txt
+pkg.generated.mbti
