@@ -10,7 +10,7 @@ license = "Apache-2.0"
 
 keywords = [ "redis", "resp", "server", "key-value", "database", "network" ]
 
-preferred_target = "wasm"
+preferred_target = "native"
 
 description = "A lightweight Redis-protocol compatible server implemented in MoonBit."
 
