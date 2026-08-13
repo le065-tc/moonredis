@@ -311,6 +311,25 @@ pub fn Store::hset(
 }
 
 ///|
+pub fn Store::hsetnx(
+  self : Store,
+  key : String,
+  field : String,
+  value : Bytes,
+) -> Int? {
+  match self.hash_or_new(key) {
+    None => None
+    Some(h) =>
+      if h.contains(field) {
+        Some(0)
+      } else {
+        h.set(field, value)
+        Some(1)
+      }
+  }
+}
+
+///|
 pub fn Store::hget(self : Store, key : String, field : String) -> Bytes? {
   match self.get(key) {
     Some(Hash(h)) => h.get(field)
@@ -542,6 +561,56 @@ pub fn Store::zcard(self : Store, key : String) -> Int? {
     Some(ZSet(z)) => Some(z.scores.length())
     _ => None
   }
+}
+
+///|
+pub fn Store::zrank(self : Store, key : String, m : String) -> Int? {
+  match self.get(key) {
+    Some(ZSet(z)) => {
+      let mut rank = 0
+      for kv in z.members.iter() {
+        let (_, members) = kv
+        for member in members.to_array() {
+          if member == m {
+            return Some(rank)
+          }
+          rank = rank + 1
+        }
+      }
+      None
+    }
+    _ => None
+  }
+}
+
+///|
+pub fn Store::zrevrank(self : Store, key : String, m : String) -> Int? {
+  match self.get(key) {
+    Some(ZSet(z)) => {
+      let total = z.scores.length()
+      match self.zrank(key, m) {
+        None => None
+        Some(r) => Some(total - 1 - r)
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+/// MSETNX semantics: set all pairs only when none of the keys exist.
+pub fn Store::msetnx(self : Store, pairs : Array[(String, Bytes)]) -> Bool {
+  for pair in pairs {
+    let (key, _) = pair
+    if self.exists(key) {
+      return false
+    }
+  }
+  for pair in pairs {
+    let (key, value) = pair
+    self.set_string(key, value)
+  }
+  true
 }
 
 ///|

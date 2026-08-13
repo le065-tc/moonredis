@@ -129,7 +129,10 @@ pub fn is_write_command(name : String) -> Bool {
     | "PERSIST"
     | "HSET"
     | "HMSET"
+    | "HSETNX"
     | "HDEL"
+    | "GETDEL"
+    | "MSETNX"
     | "LPUSH"
     | "RPUSH"
     | "LPOP"
@@ -200,8 +203,10 @@ pub fn execute(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
     "GET" => cmd_get(ctx, args)
     "SET" => cmd_set(ctx, args)
     "SETNX" => cmd_setnx(ctx, args)
+    "GETDEL" => cmd_getdel(ctx, args)
     "MGET" => cmd_mget(ctx, args)
     "MSET" => cmd_mset(ctx, args)
+    "MSETNX" => cmd_msetnx(ctx, args)
     "APPEND" => cmd_append(ctx, args)
     "STRLEN" => cmd_strlen(ctx, args)
     "INCR" => cmd_incr(ctx, args, 1L)
@@ -210,6 +215,7 @@ pub fn execute(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
     "DECRBY" => cmd_decrby(ctx, args)
     "HSET" => cmd_hset(ctx, args)
     "HMSET" => cmd_hmset(ctx, args)
+    "HSETNX" => cmd_hsetnx(ctx, args)
     "HGET" => cmd_hget(ctx, args)
     "HGETALL" => cmd_hgetall(ctx, args)
     "HDEL" => cmd_hdel(ctx, args)
@@ -234,6 +240,8 @@ pub fn execute(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
     "ZADD" => cmd_zadd(ctx, args)
     "ZRANGE" => cmd_zrange(ctx, args)
     "ZSCORE" => cmd_zscore(ctx, args)
+    "ZRANK" => cmd_zrank(ctx, args)
+    "ZREVRANK" => cmd_zrevrank(ctx, args)
     "ZREM" => cmd_zrem(ctx, args)
     "ZCARD" => cmd_zcard(ctx, args)
     "ZINCRBY" => cmd_zincrby(ctx, args)
@@ -347,12 +355,13 @@ fn cmd_command(args : Array[Bytes]) -> @resp.Value {
   let names = [
     "PING", "ECHO", "HELLO", "COMMAND", "QUIT", "SELECT", "DBSIZE", "FLUSHDB", "FLUSHALL",
     "KEYS", "TYPE", "EXISTS", "DEL", "EXPIRE", "PEXPIRE", "TTL", "PTTL", "PERSIST",
-    "GET", "SET", "SETNX", "MGET", "MSET", "APPEND", "STRLEN", "INCR", "DECR", "INCRBY",
-    "DECRBY", "HSET", "HMSET", "HGET", "HGETALL", "HDEL", "HEXISTS", "HLEN", "HKEYS",
-    "HVALS", "LPUSH", "RPUSH", "LPOP", "RPOP", "LLEN", "LRANGE", "LINDEX", "LSET",
-    "SADD", "SREM", "SMEMBERS", "SISMEMBER", "SCARD", "SPOP", "ZADD", "ZRANGE", "ZSCORE",
-    "ZREM", "ZCARD", "ZINCRBY", "SUBSCRIBE", "UNSUBSCRIBE", "PUBLISH", "MULTI", "EXEC",
-    "DISCARD", "CONFIG", "INFO", "CLIENT", "SAVE", "AUTH", "SHUTDOWN",
+    "GET", "SET", "SETNX", "GETDEL", "MGET", "MSET", "MSETNX", "APPEND", "STRLEN",
+    "INCR", "DECR", "INCRBY", "DECRBY", "HSET", "HMSET", "HSETNX", "HGET", "HGETALL",
+    "HDEL", "HEXISTS", "HLEN", "HKEYS", "HVALS", "LPUSH", "RPUSH", "LPOP", "RPOP",
+    "LLEN", "LRANGE", "LINDEX", "LSET", "SADD", "SREM", "SMEMBERS", "SISMEMBER",
+    "SCARD", "SPOP", "ZADD", "ZRANGE", "ZSCORE", "ZRANK", "ZREVRANK", "ZREM", "ZCARD",
+    "ZINCRBY", "SUBSCRIBE", "UNSUBSCRIBE", "PUBLISH", "MULTI", "EXEC", "DISCARD",
+    "CONFIG", "INFO", "CLIENT", "SAVE", "AUTH", "SHUTDOWN",
   ]
   let items : Array[@resp.Value] = []
   for n in names {
@@ -539,6 +548,28 @@ fn cmd_setnx(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
 }
 
 ///|
+fn cmd_getdel(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
+  if args.length() != 2 {
+    return wrong_arity("getdel")
+  }
+  let key = arg_str(args, 1)
+  match ctx.store.type_of(key) {
+    None => @resp.NullBulk
+    Some(t) => {
+      if t != "string" {
+        return wrong_type()
+      }
+      let value = ctx.store.get_string(key)
+      let _ = ctx.store.del(key)
+      match value {
+        None => @resp.NullBulk
+        Some(b) => @resp.BulkString(b)
+      }
+    }
+  }
+}
+
+///|
 fn cmd_mget(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
   if args.length() < 2 {
     return wrong_arity("mget")
@@ -564,6 +595,20 @@ fn cmd_mset(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
     i = i + 2
   }
   @resp.SimpleString("OK")
+}
+
+///|
+fn cmd_msetnx(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
+  if args.length() < 3 || args.length() % 2 == 0 {
+    return wrong_arity("msetnx")
+  }
+  let pairs : Array[(String, Bytes)] = []
+  let mut i = 1
+  while i + 1 < args.length() {
+    pairs.push((arg_str(args, i), args[i + 1]))
+    i = i + 2
+  }
+  @resp.Integer(if ctx.store.msetnx(pairs) { 1L } else { 0L })
 }
 
 ///|
@@ -656,6 +701,17 @@ fn cmd_hmset(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
   match r {
     @resp.Integer(_) => @resp.SimpleString("OK")
     _ => r
+  }
+}
+
+///|
+fn cmd_hsetnx(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
+  if args.length() != 4 {
+    return wrong_arity("hsetnx")
+  }
+  match ctx.store.hsetnx(arg_str(args, 1), arg_str(args, 2), args[3]) {
+    None => wrong_type()
+    Some(n) => @resp.Integer(n.to_int64())
   }
 }
 
@@ -1066,6 +1122,28 @@ fn cmd_zscore(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
   match ctx.store.zscore(arg_str(args, 1), arg_str(args, 2)) {
     None => @resp.NullBulk
     Some(s) => @resp.BulkString(@utf8.encode(format_double(s)))
+  }
+}
+
+///|
+fn cmd_zrank(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
+  if args.length() != 3 {
+    return wrong_arity("zrank")
+  }
+  match ctx.store.zrank(arg_str(args, 1), arg_str(args, 2)) {
+    None => @resp.NullBulk
+    Some(r) => @resp.Integer(r.to_int64())
+  }
+}
+
+///|
+fn cmd_zrevrank(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
+  if args.length() != 3 {
+    return wrong_arity("zrevrank")
+  }
+  match ctx.store.zrevrank(arg_str(args, 1), arg_str(args, 2)) {
+    None => @resp.NullBulk
+    Some(r) => @resp.Integer(r.to_int64())
   }
 }
 

@@ -86,3 +86,122 @@ test "publish reaches subscribers" {
     _ => fail("expected integer")
   }
 }
+
+///|
+test "getdel returns and removes string" {
+  let ctx = mk_ctx()
+  let _ = @commands.execute(ctx, [
+    @utf8.encode("SET"),
+    @utf8.encode("k"),
+    @utf8.encode("v"),
+  ])
+  let r = @commands.execute(ctx, [@utf8.encode("GETDEL"), @utf8.encode("k")])
+  match r {
+    @resp.BulkString(b) => assert_eq(@utf8.decode_lossy(b), "v")
+    _ => fail("expected bulk")
+  }
+  let g = @commands.execute(ctx, [@utf8.encode("GET"), @utf8.encode("k")])
+  match g {
+    @resp.NullBulk => ()
+    _ => fail("expected null after getdel")
+  }
+}
+
+///|
+test "msetnx sets only when all keys absent" {
+  let ctx = mk_ctx()
+  let r1 = @commands.execute(ctx, [
+    @utf8.encode("MSETNX"),
+    @utf8.encode("a"),
+    @utf8.encode("1"),
+    @utf8.encode("b"),
+    @utf8.encode("2"),
+  ])
+  match r1 {
+    @resp.Integer(v) => assert_eq(v, 1L)
+    _ => fail("expected 1")
+  }
+  let r2 = @commands.execute(ctx, [
+    @utf8.encode("MSETNX"),
+    @utf8.encode("a"),
+    @utf8.encode("3"),
+    @utf8.encode("c"),
+    @utf8.encode("4"),
+  ])
+  match r2 {
+    @resp.Integer(v) => assert_eq(v, 0L)
+    _ => fail("expected 0")
+  }
+  let g = @commands.execute(ctx, [@utf8.encode("GET"), @utf8.encode("a")])
+  match g {
+    @resp.BulkString(b) => assert_eq(@utf8.decode_lossy(b), "1")
+    _ => fail("expected a=1")
+  }
+}
+
+///|
+test "hsetnx only sets new field" {
+  let ctx = mk_ctx()
+  let r1 = @commands.execute(ctx, [
+    @utf8.encode("HSETNX"),
+    @utf8.encode("h"),
+    @utf8.encode("f"),
+    @utf8.encode("v"),
+  ])
+  match r1 {
+    @resp.Integer(v) => assert_eq(v, 1L)
+    _ => fail("expected 1")
+  }
+  let r2 = @commands.execute(ctx, [
+    @utf8.encode("HSETNX"),
+    @utf8.encode("h"),
+    @utf8.encode("f"),
+    @utf8.encode("w"),
+  ])
+  match r2 {
+    @resp.Integer(v) => assert_eq(v, 0L)
+    _ => fail("expected 0")
+  }
+  let g = @commands.execute(ctx, [
+    @utf8.encode("HGET"),
+    @utf8.encode("h"),
+    @utf8.encode("f"),
+  ])
+  match g {
+    @resp.BulkString(b) => assert_eq(@utf8.decode_lossy(b), "v")
+    _ => fail("expected v")
+  }
+}
+
+///|
+test "zrank and zrevrank" {
+  let ctx = mk_ctx()
+  let _ = @commands.execute(ctx, [
+    @utf8.encode("ZADD"),
+    @utf8.encode("z"),
+    @utf8.encode("1"),
+    @utf8.encode("a"),
+    @utf8.encode("2"),
+    @utf8.encode("b"),
+    @utf8.encode("3"),
+    @utf8.encode("c"),
+  ])
+  let r = @commands.execute(ctx, [
+    @utf8.encode("ZRANK"),
+    @utf8.encode("z"),
+    @utf8.encode("b"),
+  ])
+  match r {
+    @resp.Integer(v) => assert_eq(v, 1L)
+    _ => fail("expected rank 1")
+  }
+  let rr = @commands.execute(ctx, [
+    @utf8.encode("ZREVRANK"),
+    @utf8.encode("z"),
+    @utf8.encode("b"),
+  ])
+  match rr {
+    @resp.Integer(v) => assert_eq(v, 1L)
+    _ => fail("expected revrank 1")
+  }
+}
