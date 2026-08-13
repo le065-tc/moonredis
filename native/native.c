@@ -328,10 +328,9 @@ MOONBIT_FFI_EXPORT int32_t mr_file_close(uint64_t handle) {
   return fclose(f);
 }
 
-typedef LPWSTR *(WINAPI *mr_CommandLineToArgvW_fn)(LPCWSTR, int *);
-
 MOONBIT_FFI_EXPORT moonbit_bytes_t mr_get_cli_args_utf8(void) {
 #ifdef _WIN32
+  typedef LPWSTR *(WINAPI *mr_CommandLineToArgvW_fn)(LPCWSTR, int *);
   static mr_CommandLineToArgvW_fn parse = NULL;
   if (parse == NULL) {
     HMODULE shell = LoadLibraryA("shell32.dll");
