@@ -161,7 +161,9 @@ fn Server::process_input(self : Server, client : Client) -> Unit {
             if name == "PUBLISH" && args.length() == 3 {
               self.deliver(@utf8.decode_lossy(args[1]), args[2])
             }
-            if @commands.is_write_command(name) && self.aof_enabled {
+            if @commands.is_write_command(name) &&
+              self.aof_enabled &&
+              !(reply is @resp.Error(_)) {
               let _ = @native.file_append(self.aof_path, encode_command(args))
             }
             if client.ctx.val.shutdown {

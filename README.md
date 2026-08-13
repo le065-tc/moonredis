@@ -2,6 +2,8 @@
 
 一个用 [MoonBit](https://www.moonbitlang.com/) 实现的轻量级、Redis 协议兼容的内存数据库服务器。
 
+[![CI](https://github.com/le065-tc/moonredis/actions/workflows/ci.yml/badge.svg)](https://github.com/le065-tc/moonredis/actions/workflows/ci.yml)
+
 moonredis 从零实现了 RESP（REdis Serialization Protocol）编解码、五种核心数据结构、键过期、事务（MULTI/EXEC）、发布订阅和 AOF 追加持久化，并通过一个自研的跨平台 TCP 桥接层在 Windows / Linux / macOS 上以原生二进制运行。
 
 ## 特性
@@ -68,15 +70,15 @@ redis-cli -p 6399 GET hello
 
 **键**：`DEL` `EXISTS` `KEYS` `TYPE` `EXPIRE` `PEXPIRE` `TTL` `PTTL` `PERSIST` `DBSIZE` `FLUSHDB` `FLUSHALL`
 
-**String**：`SET` `SETNX` `GET` `MGET` `MSET` `APPEND` `STRLEN` `INCR` `DECR` `INCRBY` `DECRBY`
+**String**：`SET` `SETNX` `GET` `GETDEL` `MGET` `MSET` `MSETNX` `APPEND` `STRLEN` `INCR` `DECR` `INCRBY` `DECRBY`
 
 **List**：`LPUSH` `RPUSH` `LPOP` `RPOP` `LLEN` `LRANGE` `LINDEX` `LSET`
 
-**Hash**：`HSET` `HMSET` `HGET` `HGETALL` `HDEL` `HEXISTS` `HLEN` `HKEYS` `HVALS`
+**Hash**：`HSET` `HMSET` `HSETNX` `HGET` `HGETALL` `HDEL` `HEXISTS` `HLEN` `HKEYS` `HVALS`
 
 **Set**：`SADD` `SREM` `SMEMBERS` `SISMEMBER` `SCARD` `SPOP`
 
-**Sorted Set**：`ZADD` `ZRANGE [WITHSCORES]` `ZSCORE` `ZREM` `ZCARD` `ZINCRBY`
+**Sorted Set**：`ZADD` `ZRANGE [WITHSCORES]` `ZSCORE` `ZRANK` `ZREVRANK` `ZREM` `ZCARD` `ZINCRBY`
 
 **事务**：`MULTI` `EXEC` `DISCARD`
 
@@ -100,6 +102,7 @@ cmd/cli/     RESP 命令行客户端
 
 ```bash
 moon test --target native
+python scripts/smoke_test.py   # 端到端冒烟测试（自动启动服务器并断言）
 ```
 
 覆盖 RESP 编解码、五种数据结构、过期、命令分发、事务、Pub/Sub、AOF 文件往返（含 Unicode 路径）。
