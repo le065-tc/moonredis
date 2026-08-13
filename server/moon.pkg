@@ -1,0 +1,9 @@
+import {
+  "moonbitlang/core/hashmap",
+  "moonbitlang/core/ref",
+  "moonbitlang/core/encoding/utf8",
+  "le065-tc/moonredis/resp",
+  "le065-tc/moonredis/store",
+  "le065-tc/moonredis/commands",
+  "le065-tc/moonredis/native",
+}

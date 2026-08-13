@@ -1,0 +1,9 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "le065-tc/moonredis/server",
+  "le065-tc/moonredis/native",
+}
+
+options(
+  "is-main": true,
+)
