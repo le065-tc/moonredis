@@ -110,7 +110,7 @@ pub fn file_read_all(path : String) -> Bytes {
 pub fn get_cli_args() -> Array[String] {
   let blob = get_cli_args_utf8_ffi()
   if blob.length() == 0 {
-    return @sys.get_cli_args()
+    return @env.args()
   }
   let parts : Array[Bytes] = []
   let mut start = 0

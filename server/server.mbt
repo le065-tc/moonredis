@@ -1,7 +1,6 @@
 ///|
 /// Single-threaded TCP server implementing the moonredis protocol.
 struct Client {
-  id : Int
   fd : UInt64
   read_buf : @ref.Ref[Bytes]
   write_buf : @ref.Ref[Bytes]
@@ -30,7 +29,7 @@ pub fn Server::new(
   let server = {
     store,
     hub: @commands.Hub::new(),
-    clients: @hashmap.HashMap::new(),
+    clients: @hashmap.HashMap([]),
     next_id: 1,
     aof_path,
     aof_enabled,
@@ -65,12 +64,11 @@ pub fn Server::start(self : Server, port : Int) -> Unit {
         let id = self.next_id
         self.next_id = self.next_id + 1
         let client = {
-          id,
           fd: c,
-          read_buf: @ref.Ref::new(Bytes::make(0, 0)),
-          write_buf: @ref.Ref::new(Bytes::make(0, 0)),
-          ctx: @ref.Ref::new(@commands.Ctx::new(self.store, self.hub, id)),
-          closed: @ref.Ref::new(false),
+          read_buf: @ref.Ref(Bytes::make(0, 0)),
+          write_buf: @ref.Ref(Bytes::make(0, 0)),
+          ctx: @ref.Ref(@commands.Ctx::new(self.store, self.hub, id)),
+          closed: @ref.Ref(false),
         }
         self.clients.set(id, client)
       }
@@ -179,7 +177,7 @@ fn Server::process_input(self : Server, client : Client) -> Unit {
 
 ///|
 fn Server::run_command(
-  self : Server,
+  _self : Server,
   client : Client,
   args : Array[Bytes],
 ) -> @resp.Value {
@@ -213,7 +211,7 @@ fn Server::deliver(self : Server, channel : String, message : Bytes) -> Unit {
 }
 
 ///|
-fn Server::flush_client(self : Server, client : Client) -> Unit {
+fn Server::flush_client(_self : Server, client : Client) -> Unit {
   while client.write_buf.val.length() > 0 && !client.closed.val {
     let n = @native.tcp_write_ffi(
       client.fd,

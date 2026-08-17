@@ -21,13 +21,16 @@ jobs:
         run: moon update
 
       - name: Format
-        run: moon fmt
+        run: moon fmt --check .
 
       - name: Build (native)
         run: moon build --target native
 
+      - name: Check (native)
+        run: moon check --deny-warn --target native
+
       - name: Test (native)
-        run: moon test --target native
+        run: moon test --deny-warn --target native
 
       - name: Smoke test
         run: python3 scripts/smoke_test.py

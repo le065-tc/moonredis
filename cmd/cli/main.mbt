@@ -53,7 +53,7 @@ fn main {
 }
 
 ///|
-fn print_value(v : @resp.Value, depth : Int) -> Unit {
+fn print_value(v : @resp.Value, _depth : Int) -> Unit {
   println(format_value(v))
 }
 

@@ -9,12 +9,12 @@ pub struct Hub {
 
 ///|
 pub fn Hub::new() -> Hub {
-  { channels: @hashmap.HashMap::new() }
+  { channels: @hashmap.HashMap([]) }
 }
 
 ///|
 pub fn Hub::subscribe(self : Hub, channel : String, id : Int) -> Unit {
-  let set = self.channels.get_or_init(channel, fn() { @hashset.HashSet::new() })
+  let set = self.channels.get_or_init(channel, fn() { @hashset.HashSet([]) })
   set.add(id)
 }
 
@@ -91,7 +91,7 @@ pub fn Ctx::new(store : @store.Store, hub : Hub, client_id : Int) -> Ctx {
     in_multi: false,
     subscribed: [],
     in_subscribe_mode: false,
-    config: @hashmap.HashMap::new(),
+    config: @hashmap.HashMap([]),
     shutdown: false,
   }
 }
@@ -320,7 +320,7 @@ fn arg_str(args : Array[Bytes], i : Int) -> String {
 }
 
 ///|
-fn cmd_ping(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
+fn cmd_ping(_ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
   match arg(args, 1) {
     None => @resp.SimpleString("PONG")
     Some(b) => @resp.BulkString(b)
@@ -336,7 +336,7 @@ fn cmd_echo(args : Array[Bytes]) -> @resp.Value {
 }
 
 ///|
-fn cmd_hello(args : Array[Bytes]) -> @resp.Value {
+fn cmd_hello(_args : Array[Bytes]) -> @resp.Value {
   let fields : Array[@resp.Value] = [
     @resp.BulkString(@utf8.encode("server")),
     @resp.BulkString(@utf8.encode("moonredis")),
@@ -357,7 +357,7 @@ fn cmd_hello(args : Array[Bytes]) -> @resp.Value {
 }
 
 ///|
-fn cmd_command(args : Array[Bytes]) -> @resp.Value {
+fn cmd_command(_args : Array[Bytes]) -> @resp.Value {
   let names = [
     "PING", "ECHO", "HELLO", "COMMAND", "QUIT", "SELECT", "DBSIZE", "FLUSHDB", "FLUSHALL",
     "KEYS", "TYPE", "EXISTS", "DEL", "EXPIRE", "PEXPIRE", "TTL", "PTTL", "PERSIST",
@@ -409,7 +409,7 @@ fn cmd_type(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
     return wrong_arity("type")
   }
   let t = ctx.store.type_of(arg_str(args, 1))
-  @resp.SimpleString(t.or("none"))
+  @resp.SimpleString(t.unwrap_or("none"))
 }
 
 ///|
@@ -950,7 +950,7 @@ fn cmd_lrange(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
       let stop = @store.parse_integer_bytes(args[3])
       match (start, stop) {
         (Some(s), Some(e)) => {
-          let len = ctx.store.llen(key).or(0)
+          let len = ctx.store.llen(key).unwrap_or(0)
           let from = normalize_index(s.to_int(), len)
           let to = normalize_index(e.to_int(), len)
           let out : Array[@resp.Value] = []
@@ -1249,7 +1249,7 @@ fn cmd_zincrby(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
     Some(incr) => {
       let key = arg_str(args, 1)
       let m = arg_str(args, 3)
-      let current = ctx.store.zscore(key, m).or(0.0)
+      let current = ctx.store.zscore(key, m).unwrap_or(0.0)
       let next = current + incr
       match ctx.store.zadd(key, [(m, next)]) {
         None => wrong_type()
@@ -1375,7 +1375,7 @@ fn cmd_config(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
       return wrong_arity("config|get")
     }
     let param = arg_str(args, 2)
-    let value = ctx.config_get(param).or("")
+    let value = ctx.config_get(param).unwrap_or("")
     return @resp.Array([
       @resp.BulkString(@utf8.encode(param)),
       @resp.BulkString(@utf8.encode(value)),
@@ -1392,7 +1392,7 @@ fn cmd_config(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
 }
 
 ///|
-fn cmd_info(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
+fn cmd_info(ctx : Ctx, _args : Array[Bytes]) -> @resp.Value {
   let b = Buffer()
   b.write_string_utf8("# Server\r\n")
   b.write_string_utf8("redis_version:7.0.0-moonredis\r\n")
@@ -1450,8 +1450,8 @@ fn normalize_index(i : Int, len : Int) -> Int {
 ///|
 fn format_double(v : Double) -> String {
   let s = v.to_string()
-  if s.ends_with(".0") {
-    s.substring(start=0, end=s.length() - 2)
+  if s.has_suffix(".0") {
+    s[:s.length() - 2].to_owned()
   } else {
     s
   }

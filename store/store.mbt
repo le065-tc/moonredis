@@ -18,7 +18,7 @@ pub(all) struct ZSetData {
 
 ///|
 pub fn ZSetData::new() -> ZSetData {
-  { scores: @hashmap.HashMap::new(), members: @sorted_map.SortedMap::new() }
+  { scores: @hashmap.HashMap([]), members: @sorted_map.SortedMap([]) }
 }
 
 ///|
@@ -30,7 +30,7 @@ pub(all) struct Store {
 
 ///|
 pub fn Store::new(now? : () -> Int64 = fn() { 0L }) -> Store {
-  { data: @hashmap.HashMap::new(), expires: @hashmap.HashMap::new(), now }
+  { data: @hashmap.HashMap([]), expires: @hashmap.HashMap([]), now }
 }
 
 ///|
@@ -242,19 +242,6 @@ pub fn Store::append_string(self : Store, key : String, value : Bytes) -> Int? {
 }
 
 ///|
-/// List operations
-fn Store::list_or_new(self : Store, key : String) -> Array[Bytes] {
-  match self.get(key) {
-    Some(List(a)) => a
-    _ => {
-      let a : Array[Bytes] = []
-      self.set(key, List(a))
-      a
-    }
-  }
-}
-
-///|
 pub fn Store::lpush(self : Store, key : String, values : Array[Bytes]) -> Int? {
   match self.get(key) {
     None => {
@@ -381,7 +368,7 @@ fn Store::hash_or_new(
   match self.get(key) {
     Some(Hash(h)) => Some(h)
     None => {
-      let h : @hashmap.HashMap[String, Bytes] = @hashmap.HashMap::new()
+      let h : @hashmap.HashMap[String, Bytes] = @hashmap.HashMap([])
       self.set(key, Hash(h))
       Some(h)
     }
@@ -483,7 +470,7 @@ fn Store::set_or_new(self : Store, key : String) -> @hashset.HashSet[String]? {
   match self.get(key) {
     Some(Set(s)) => Some(s)
     None => {
-      let s : @hashset.HashSet[String] = @hashset.HashSet::new()
+      let s : @hashset.HashSet[String] = @hashset.HashSet([])
       self.set(key, Set(s))
       Some(s)
     }
@@ -588,7 +575,7 @@ pub fn Store::zadd(
 
 ///|
 fn Store::zset_put(
-  self : Store,
+  _self : Store,
   z : ZSetData,
   m : String,
   score : Double,
@@ -607,7 +594,7 @@ fn Store::zset_put(
     None => ()
   }
   z.scores.set(m, score)
-  let set = z.members.get_or_init(score, fn() { @hashset.HashSet::new() })
+  let set = z.members.get_or_init(score, fn() { @hashset.HashSet([]) })
   set.add(m)
 }
 
@@ -666,8 +653,8 @@ pub fn Store::zrank(self : Store, key : String, m : String) -> Int? {
       let mut rank = 0
       for kv in z.members.iter() {
         let (_, members) = kv
-        for member in members.to_array() {
-          if member == m {
+        for item in members.to_array() {
+          if item == m {
             return Some(rank)
           }
           rank = rank + 1
@@ -719,6 +706,7 @@ pub fn Store::zrange(
   stop : Int,
   with_scores? : Bool = false,
 ) -> Array[(String, Double)]? {
+  ignore(with_scores)
   match self.get(key) {
     Some(ZSet(z)) => {
       let all : Array[(String, Double)] = []
