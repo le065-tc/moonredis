@@ -2,6 +2,7 @@
 
 一个用 [MoonBit](https://www.moonbitlang.com/) 实现的轻量级、Redis 协议兼容的内存数据库服务器。
 
+[![mooncakes.io](https://img.shields.io/badge/mooncakes.io-le065--tc%2Fmoonredis-blue)](https://mooncakes.io/packages/le065-tc/moonredis)
 [![CI](https://github.com/le065-tc/moonredis/actions/workflows/ci.yml/badge.svg)](https://github.com/le065-tc/moonredis/actions/workflows/ci.yml)
 
 moonredis 从零实现了 RESP（REdis Serialization Protocol）编解码、五种核心数据结构、键过期、事务（MULTI/EXEC）、发布订阅和 AOF 追加持久化，并通过一个自研的跨平台 TCP 桥接层在 Windows / Linux / macOS 上以原生二进制运行。
@@ -118,3 +119,7 @@ python scripts/smoke_test.py   # 端到端冒烟测试（自动启动服务器�
 ## License
 
 [Apache-2.0](LICENSE)
+
+## 来源与合规
+
+项目为原创 MoonBit 实现，未复制 Redis 或第三方 Redis 兼容服务器源码。协议兼容性范围、设计取舍和原生 C shim 来源说明见 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) 与 [docs/SOURCES.md](docs/SOURCES.md)。
