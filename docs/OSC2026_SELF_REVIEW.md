@@ -32,7 +32,7 @@
 - `moon test --deny-warn`：本机使用 w64devkit GCC，30 个测试全部通过。
 - `python scripts/smoke_test.py`：端到端冒烟测试通过。
 - GitHub Actions：最新 CI 已通过 native build/test 和 `scripts/smoke_test.py`。
-- `moon publish`：`le065-tc/moonredis@0.1.2` 已发布成功；当前本地版本为 `0.1.3`，待发布。
+- `moon publish`：`le065-tc/moonredis@0.1.3` 已发布成功。
 - `git remote show origin`：远程默认分支为 `main`，本地 `main` 已跟踪 `origin/main`。
 - `git rev-list --count HEAD`：当前历史超过 10 个提交，提交数满足申报建议范围。
 
