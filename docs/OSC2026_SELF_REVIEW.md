@@ -4,17 +4,16 @@
 
 `moonredis` 是一个有效的 MoonBit native 项目，定位为 Redis 协议兼容的轻量级内存数据库服务器。项目包含 RESP 编解码、五类核心数据结构、键过期、事务、发布订阅、AOF、server/cli、示例、兼容性文档、CI 和 Apache-2.0 许可证，具备较清晰的工程边界和演示价值。
 
-当前主要本地环境限制是 native/FFI 依赖：项目需要 C 编译器才能在本机运行 `moon test --target native` 和端到端 smoke test。本机未安装 `cl`/`cc`/`gcc`/`clang`，因此本地无法完成 native 测试闭环；GitHub Actions 已提供 native build/test/smoke test 的通过证据。
+项目需要 C 编译器运行 native 测试；本机已定位并使用随 MoonBit 环境提供的 w64devkit GCC，严格测试和端到端 smoke test 均已通过。
 
 ## 提交前需要处理的问题
 
-- 本地环境缺 C 编译器，`moon test` 报错：`no system C compiler found; tried cl, cc, gcc, clang`。Windows 建议安装 w64devkit、MSVC Build Tools 或 clang，并确保编译器在 `PATH` 中。
 - Gitlink 仓库未在本地 remote 中体现。提交申报前需要导入并同步 Gitlink，确认默认分支能看到主要代码和提交历史。
-- 项目核心 MoonBit 源码约 3211 行，不含测试；含测试约 3655 行。略低于章程 4-10k 有效 MoonBit 行数参考范围，建议继续补充命令覆盖、兼容性测试或更完整的持久化/协议文档。
+- 项目有效 MoonBit 源码与测试为 4,053 行，达到章程项目规模参考下限。
 
 ## 需要进一步确认的问题
 
-- GitHub、Gitlink、mooncakes 的账号主体是否均为申报人或已在申报材料中解释协作关系。
+- 申请人孙玉钊与 GitHub/mooncakes 账号 `le065-tc` 的关系已记录在 `docs/PARTICIPATION.md`。
 - 是否已经把 GitHub 当前默认分支同步到 Gitlink。
 
 ## 建议改进
@@ -30,9 +29,10 @@
 - `moon check --deny-warn`：通过。本次已清理弃用 API、未使用变量和未来保留字警告。
 - `moon fmt --check .`：通过。
 - `moon info`：通过。
-- `moon test`：本机因缺 C 编译器无法执行 native 测试。
+- `moon test --deny-warn`：本机使用 w64devkit GCC，30 个测试全部通过。
+- `python scripts/smoke_test.py`：端到端冒烟测试通过。
 - GitHub Actions：最新 CI 已通过 native build/test 和 `scripts/smoke_test.py`。
-- `moon publish`：`le065-tc/moonredis@0.1.1` 已发布成功。
+- `moon publish`：`le065-tc/moonredis@0.1.2` 已发布成功；当前本地版本为 `0.1.3`，待发布。
 - `git remote show origin`：远程默认分支为 `main`，本地 `main` 已跟踪 `origin/main`。
 - `git rev-list --count HEAD`：当前历史超过 10 个提交，提交数满足申报建议范围。
 

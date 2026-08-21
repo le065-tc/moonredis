@@ -64,3 +64,44 @@ test "parse integer bytes" {
   assert_eq(@store.parse_integer_bytes(@utf8.encode("-7")), Some(-7L))
   assert_eq(@store.parse_integer_bytes(@utf8.encode("abc")), None)
 }
+
+///|
+test "rename preserves value and expiry" {
+  let mut now = 100L
+  let store = @store.Store::new(now=fn() { now })
+  store.set_string("old", @utf8.encode("value"))
+  assert_true(store.expire("old", 50L))
+  assert_true(store.rename("old", "new"))
+  assert_false(store.exists("old"))
+  assert_eq(@utf8.decode_lossy(store.get_string("new").unwrap_or(b"")), "value")
+  assert_eq(store.ttl_ms("new"), Some(50L))
+  now = 151L
+  assert_false(store.exists("new"))
+}
+
+///|
+test "rename replaces destination and renamenx protects it" {
+  let store = @store.Store::new()
+  store.set_string("source", @utf8.encode("one"))
+  store.set_string("destination", @utf8.encode("two"))
+  assert_false(store.renamenx("source", "destination"))
+  assert_true(store.exists("source"))
+  assert_true(store.rename("source", "destination"))
+  assert_false(store.exists("source"))
+  assert_eq(
+    @utf8.decode_lossy(store.get_string("destination").unwrap_or(b"")),
+    "one",
+  )
+}
+
+///|
+test "touch counts existing keys and expires stale keys" {
+  let mut now = 0L
+  let store = @store.Store::new(now=fn() { now })
+  store.set_string("live", b"1")
+  store.set_string("stale", b"2")
+  assert_true(store.expire("stale", 10L))
+  now = 11L
+  assert_eq(store.touch(["live", "stale", "missing"]), 1)
+  assert_false(store.exists("stale"))
+}

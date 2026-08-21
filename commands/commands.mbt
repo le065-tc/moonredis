@@ -125,6 +125,8 @@ pub fn is_write_command(name : String) -> Bool {
     | "INCRBY"
     | "DECRBY"
     | "DEL"
+    | "RENAME"
+    | "RENAMENX"
     | "EXPIRE"
     | "PEXPIRE"
     | "PERSIST"
@@ -197,6 +199,9 @@ pub fn execute(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
     "TYPE" => cmd_type(ctx, args)
     "EXISTS" => cmd_exists(ctx, args)
     "DEL" => cmd_del(ctx, args)
+    "RENAME" => cmd_rename(ctx, args, false)
+    "RENAMENX" => cmd_rename(ctx, args, true)
+    "TOUCH" => cmd_touch(ctx, args)
     "EXPIRE" => cmd_expire(ctx, args, 1000L)
     "PEXPIRE" => cmd_expire(ctx, args, 1L)
     "TTL" => cmd_ttl(ctx, args, 1000L)
@@ -438,6 +443,41 @@ fn cmd_del(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
     }
   }
   @resp.Integer(n.to_int64())
+}
+
+///|
+fn cmd_rename(ctx : Ctx, args : Array[Bytes], nx : Bool) -> @resp.Value {
+  if args.length() != 3 {
+    return wrong_arity(if nx { "renamenx" } else { "rename" })
+  }
+  let source = arg_str(args, 1)
+  let destination = arg_str(args, 2)
+  if nx {
+    return @resp.Integer(
+      if ctx.store.renamenx(source, destination) {
+        1L
+      } else {
+        0L
+      },
+    )
+  }
+  if ctx.store.rename(source, destination) {
+    @resp.SimpleString("OK")
+  } else {
+    err("ERR no such key")
+  }
+}
+
+///|
+fn cmd_touch(ctx : Ctx, args : Array[Bytes]) -> @resp.Value {
+  if args.length() < 2 {
+    return wrong_arity("touch")
+  }
+  let keys : Array[String] = []
+  for i = 1; i < args.length(); i = i + 1 {
+    keys.push(arg_str(args, i))
+  }
+  @resp.Integer(ctx.store.touch(keys).to_int64())
 }
 
 ///|

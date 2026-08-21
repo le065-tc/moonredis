@@ -109,6 +109,8 @@ python scripts/smoke_test.py   # 端到端冒烟测试（自动启动服务器�
 
 覆盖 RESP 编解码、五种数据结构、过期、命令分发、事务、Pub/Sub、AOF 文件往返（含 Unicode 路径）。
 
+键空间命令额外支持 `RENAME`、`RENAMENX` 和 `TOUCH`，重命名时保留 TTL。
+
 ## 设计说明与限制
 
 - 单线程事件循环，当前面向本地开发、教学与嵌入式演示场景；多线程与完整 Redis 命令集不在本次范围内。
@@ -123,3 +125,7 @@ python scripts/smoke_test.py   # 端到端冒烟测试（自动启动服务器�
 ## 来源与合规
 
 项目为原创 MoonBit 实现，未复制 Redis 或第三方 Redis 兼容服务器源码。协议兼容性范围、设计取舍和原生 C shim 来源说明见 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) 与 [docs/SOURCES.md](docs/SOURCES.md)。
+
+## 参赛与维护
+
+OSC 2026 申请人与仓库维护者关系见 [docs/PARTICIPATION.md](docs/PARTICIPATION.md)。

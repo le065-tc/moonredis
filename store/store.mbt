@@ -141,6 +141,61 @@ pub fn Store::type_of(self : Store, key : String) -> String? {
 }
 
 ///|
+/// Rename a key while preserving its value and absolute expiry time.
+/// Returns false when the source key does not exist (or has expired).
+pub fn Store::rename(
+  self : Store,
+  source : String,
+  destination : String,
+) -> Bool {
+  if source == destination {
+    return self.exists(source)
+  }
+  match self.get(source) {
+    None => false
+    Some(value) => {
+      let expiry = self.expires.get(source)
+      self.data.set(destination, value)
+      self.data.remove(source)
+      self.expires.remove(destination)
+      self.expires.remove(source)
+      match expiry {
+        Some(at) => self.expires.set(destination, at)
+        None => ()
+      }
+      true
+    }
+  }
+}
+
+///|
+/// Rename a key only when the destination does not already exist.
+/// Returns true when the key was moved.
+pub fn Store::renamenx(
+  self : Store,
+  source : String,
+  destination : String,
+) -> Bool {
+  if !self.exists(source) || self.exists(destination) {
+    return false
+  }
+  self.rename(source, destination)
+}
+
+///|
+/// Count how many supplied keys currently exist. Expired keys are removed as
+/// part of the lookup, matching Redis TOUCH semantics without updating TTLs.
+pub fn Store::touch(self : Store, keys : Array[String]) -> Int {
+  let mut count = 0
+  for key in keys {
+    if self.exists(key) {
+      count = count + 1
+    }
+  }
+  count
+}
+
+///|
 /// String operations
 pub fn Store::set_string(self : Store, key : String, value : Bytes) -> Unit {
   self.set(key, Str(value))

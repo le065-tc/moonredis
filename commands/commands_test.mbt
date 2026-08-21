@@ -288,3 +288,27 @@ test "hstrlen and ltrim" {
     _ => fail("expected 2 items")
   }
 }
+
+///|
+test "rename renamenx and touch commands" {
+  let ctx = mk_ctx()
+  let _ = @commands.execute(ctx, [b"SET", b"old", b"value"])
+  let renamed = @commands.execute(ctx, [b"RENAME", b"old", b"new"])
+  match renamed {
+    @resp.SimpleString(value) => assert_eq(value, "OK")
+    _ => fail("expected OK")
+  }
+  let _ = @commands.execute(ctx, [b"SET", b"occupied", b"keep"])
+  let nx_result = @commands.execute(ctx, [b"RENAMENX", b"new", b"occupied"])
+  match nx_result {
+    @resp.Integer(value) => assert_eq(value, 0L)
+    _ => fail("expected integer")
+  }
+  let touched = @commands.execute(ctx, [
+    b"TOUCH", b"new", b"occupied", b"missing",
+  ])
+  match touched {
+    @resp.Integer(value) => assert_eq(value, 2L)
+    _ => fail("expected integer")
+  }
+}
